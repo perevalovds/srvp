@@ -49,4 +49,5 @@ if __name__ == "__main__":
                 '-s', f'{args.image_size}x{args.image_size}',
                 os.path.join(args.data_dir, f'processed_{args.image_size}', c, fname, f'image-%03d.png')
             ]
+            print("COMMAND", cmd)
             subprocess.call(cmd)

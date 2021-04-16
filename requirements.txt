@@ -12,3 +12,9 @@ tensorflow-gpu==1.14.0
 torch==1.4.0
 torchvision==0.5.0
 tqdm==4.42.1
+
+
+#Also for Windows I was required to use:
+#pip install "pillow<7"
+#pip install --upgrade tensorflow-hub
+#also copy ffmpeg.exe and ffprobe.exe to root
