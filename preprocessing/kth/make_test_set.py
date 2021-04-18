@@ -66,10 +66,15 @@ if __name__ == "__main__":
         action = classes[c]
         person = np.random.randint(21, 26)
         trial = np.random.randint(1, 5)
+        
+        # VIDEO NAME HARDCODED
         vid = 'person01_walking_d4' #f'person{person:02d}_{action}_d{trial}'
         images_fnames = sorted(os.listdir(join(processed_dir, action, vid)))
         # Randomly choose the beginning of the video extract to be included in the testing set
-        t_0 = 27 #np.random.randint(len(images_fnames) - args.seq_len + 1)
+        
+        # FIRST FRAME  HARDCODED
+        t_0 = 10   #np.random.randint(len(images_fnames) - args.seq_len + 1)
+
         images = []
         for t in range(args.seq_len):
             img = np.array(Image.open(join(processed_dir, action, vid, images_fnames[t_0 + t])))[:, :, 0]

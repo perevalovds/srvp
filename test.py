@@ -247,19 +247,21 @@ def main(opt):
             if i == 0:
                 cond_rec.append(x_rec.cpu().mul(255).byte().permute(1, 0, 3, 4, 2))
             # Use the model in prediction mode starting from the last inferred state
-            y_os = model.generate(y_0, [], nt_test - nt_cond + 1, dt=1 / opt.n_euler_steps)[0]
+            Nt_test = 80
+            
+            y_os = model.generate(y_0, [], Nt_test - nt_cond + 1, dt=1 / opt.n_euler_steps)[0]
             y = y_os[1:].contiguous()  # Remove the first state which is the last inferred state
             x_pred = model.decode(w, y, skip).clamp(0, 1)
             
             
 
             # Metrics
-            mse = torch.mean(F.mse_loss(x_pred, x_target, reduction='none'), dim=[3, 4])
-            metrics_batch = {
-                'psnr': 10 * torch.log10(1 / mse).mean(2).mean(0).cpu(),
-                'ssim': _ssim_wrapper(x_pred, x_target).mean(2).mean(0).cpu(),
-                'lpips': _lpips_wrapper(x_pred, x_target, lpips_model).mean(0).cpu()
-            }
+            #mse = torch.mean(F.mse_loss(x_pred, x_target, reduction='none'), dim=[3, 4])
+            #metrics_batch = {
+            #    'psnr': 10 * torch.log10(1 / mse).mean(2).mean(0).cpu(),
+            #    'ssim': _ssim_wrapper(x_pred, x_target).mean(2).mean(0).cpu(),
+            #    'lpips': _lpips_wrapper(x_pred, x_target, lpips_model).mean(0).cpu()
+            #}
             x_pred_byte = x_pred.cpu().mul(255).byte().permute(1, 0, 3, 4, 2)
 
             #---------------------------------------
@@ -280,70 +282,69 @@ def main(opt):
             #---------------------------------------
         
             # Random samples
-            if i < 5:
-                random_samples[i].append(x_pred_byte)
-            for name, values in metrics_batch.items():
+            #if i < 5:
+            #    random_samples[i].append(x_pred_byte)
+            #for name, values in metrics_batch.items():
                 # Iteratively compute the best and worse samples across all performed predictions for the batch of
                 # videos
-                if i == 0:
+            #    if i == 0:
                     # Initial values given by the first prediction
-                    metric_best[name] = values.clone()        # Metric value for the current best prediction
-                    sample_best[name] = x_pred_byte.clone()   # Current best prediction
-                    metric_worst[name] = values.clone()       # Metric value for the current worse prediction
-                    sample_worst[name] = x_pred_byte.clone()  # Current worse prediction
-                    continue
+            #        metric_best[name] = values.clone()        # Metric value for the current best prediction
+            #        sample_best[name] = x_pred_byte.clone()   # Current best prediction
+            #        metric_worst[name] = values.clone()       # Metric value for the current worse prediction
+            #        sample_worst[name] = x_pred_byte.clone()  # Current worse prediction
+            #        continue
                 # Update best samples and metrics per batch element
-                idx_better = _get_idx_better(name, metric_best[name], values)
-                metric_best[name][idx_better] = values[idx_better]
-                sample_best[name][idx_better] = x_pred_byte[idx_better]
+            #    idx_better = _get_idx_better(name, metric_best[name], values)
+            #    metric_best[name][idx_better] = values[idx_better]
+            #    sample_best[name][idx_better] = x_pred_byte[idx_better]
                 # Update worst samples and metrics per batch element
-                idx_worst = _get_idx_worst(name, metric_worst[name], values)
-                metric_worst[name][idx_worst] = values[idx_worst]
-                sample_worst[name][idx_worst] = x_pred_byte[idx_worst]
+            #    idx_worst = _get_idx_worst(name, metric_worst[name], values)
+            #    metric_worst[name][idx_worst] = values[idx_worst]
+             #   sample_worst[name][idx_worst] = x_pred_byte[idx_worst]
         # Register best and worse predictions and best metrics
-        for name in sample_best.keys():
-            best_samples[name].append(sample_best[name])
-            worst_samples[name].append(sample_worst[name])
-            results[name].append(metric_best[name])
+        #for name in sample_best.keys():
+        #    best_samples[name].append(sample_best[name])
+        #    worst_samples[name].append(sample_worst[name])
+        #    results[name].append(metric_best[name])
 
 
     # Store best, worst and random samples
-    samples = {f'random_{i + 1}': torch.cat(random_sample).numpy() for i, random_sample in enumerate(random_samples)}
-    samples['cond_rec'] = torch.cat(cond_rec)
-    for name in best_samples.keys():
-        samples[f'{name}_best'] = torch.cat(best_samples[name]).numpy()
-        samples[f'{name}_worst'] = torch.cat(worst_samples[name]).numpy()
-        results[name] = torch.cat(results[name]).numpy()
+    #samples = {f'random_{i + 1}': torch.cat(random_sample).numpy() for i, random_sample in enumerate(random_samples)}
+    #samples['cond_rec'] = torch.cat(cond_rec)
+    #for name in best_samples.keys():
+    #    samples[f'{name}_best'] = torch.cat(best_samples[name]).numpy()
+    #    samples[f'{name}_worst'] = torch.cat(worst_samples[name]).numpy()
+    #    results[name] = torch.cat(results[name]).numpy()
 
-    print(x_pred_byte.shape)
     ##################################################################################################################
     # Compute FVD
     ##################################################################################################################
-    if opt.fvd:
-        print('Computing FVD...')
-        cond = torch.cat(cond, 0).permute(1, 0, 4, 2, 3).float().div(255)
-        gt = torch.cat(gt, 0).permute(1, 0, 4, 2, 3).float().div(255)
-        ref = torch.cat([cond, gt], 0)
-        hyp = torch.from_numpy(samples['random_1']).clone().permute(1, 0, 4, 2, 3).float().div(255)
-        hyp = torch.cat([cond, hyp], 0)
-        fvd = fvd_score(ref, hyp)
+    #if opt.fvd:
+    #    print('Computing FVD...')
+    #    cond = torch.cat(cond, 0).permute(1, 0, 4, 2, 3).float().div(255)
+    #    gt = torch.cat(gt, 0).permute(1, 0, 4, 2, 3).float().div(255)
+    #    ref = torch.cat([cond, gt], 0)
+    #    hyp = torch.from_numpy(samples['random_1']).clone().permute(1, 0, 4, 2, 3).float().div(255)
+    #    hyp = torch.cat([cond, hyp], 0)
+    #    fvd = fvd_score(ref, hyp)
 
     ##################################################################################################################
     # Print results
     ##################################################################################################################
-    print('\n')
-    print('Results:')
-    for name, res in results.items():
-        print(name, res.mean(), '+/-', 1.960 * res.std() / np.sqrt(len(res)))
-    if opt.fvd:
-        print('FVD', fvd)
+    #print('\n')
+    #print('Results:')
+    #for name, res in results.items():
+    #    print(name, res.mean(), '+/-', 1.960 * res.std() / np.sqrt(len(res)))
+    #if opt.fvd:
+    #    print('FVD', fvd)
 
     ##################################################################################################################
     # Save samples
     ##################################################################################################################
-    np.savez_compressed(os.path.join(opt.xp_dir, 'results.npz'), **results)
-    for name, res in samples.items():
-        np.savez_compressed(os.path.join(opt.xp_dir, f'{name}.npz'), samples=res)
+    #np.savez_compressed(os.path.join(opt.xp_dir, 'results.npz'), **results)
+    #for name, res in samples.items():
+    #    np.savez_compressed(os.path.join(opt.xp_dir, f'{name}.npz'), samples=res)
 
 
 if __name__ == '__main__':
