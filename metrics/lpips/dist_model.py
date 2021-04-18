@@ -58,8 +58,8 @@ class DistModel(BaseModel):
             self.net = networks.PNetLin(pnet_rand=pnet_rand, pnet_tune=pnet_tune, pnet_type=net,
                 use_dropout=True, spatial=spatial, version=version, lpips=True)
             kw = {}
-            if not use_gpu:
-                kw['map_location'] = 'cpu'
+            #if not use_gpu:
+            kw['map_location'] = 'cpu'
 
             if(not is_train):
                 model_path = os.path.join(model_path, 'weights', f'v{version}', f'{net}.pth')

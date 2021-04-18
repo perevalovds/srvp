@@ -32,6 +32,9 @@ from metrics.ssim import ssim_loss
 from metrics.lpips.loss import PerceptualLoss
 from metrics.fvd.score import fvd as fvd_score
 
+from PIL import Image
+
+
 
 def _ssim_wrapper(sample, gt):
     """
@@ -156,12 +159,12 @@ def main(opt):
     ##################################################################################################################
     # -- Device handling (CPU, GPU)
     opt.train = False
-    if opt.device is None:
-        device = torch.device('cpu')
-    else:
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(opt.device)
-        device = torch.device('cuda:0')
-        torch.cuda.set_device(0)
+    #if opt.device is None:
+    device = torch.device('cpu')
+    #else:
+    #    os.environ["CUDA_VISIBLE_DEVICES"] = str(opt.device)
+    #    device = torch.device('cuda:0')
+    #    torch.cuda.set_device(0)
     # Seed
     random.seed(opt.test_seed)
     np.random.seed(opt.test_seed)
@@ -234,7 +237,10 @@ def main(opt):
         # Encode conditional frames and extracts skip connections
         skip = model.encode(x_cond)[1] if model.skipco != 'none' else None
         # Generate opt.n_samples predictions
+        
+        print("prediction...");
         for i in range(opt.n_samples):
+            print(i)
             # Infer latent variables
             x_rec, y, _, w, _, _, _, _ = model(x_cond, nt_cond, dt=1 / xp_config.n_euler_steps)
             y_0 = y[-1]
@@ -244,6 +250,8 @@ def main(opt):
             y_os = model.generate(y_0, [], nt_test - nt_cond + 1, dt=1 / opt.n_euler_steps)[0]
             y = y_os[1:].contiguous()  # Remove the first state which is the last inferred state
             x_pred = model.decode(w, y, skip).clamp(0, 1)
+            
+            
 
             # Metrics
             mse = torch.mean(F.mse_loss(x_pred, x_target, reduction='none'), dim=[3, 4])
@@ -254,6 +262,23 @@ def main(opt):
             }
             x_pred_byte = x_pred.cpu().mul(255).byte().permute(1, 0, 3, 4, 2)
 
+            #---------------------------------------
+            # Save image
+            print("x_pred_byte", x_pred_byte.shape)   #shape is ([1, 30, 64, 64, 1])
+            x_numpy = x_pred_byte.numpy()
+
+            n = x_numpy.shape[1]   #number of frames
+            
+            print("frames:", n)
+            for i in range(n):
+                A = x_numpy[0,i,:,:,0]
+                #print(A.shape)
+                im = Image.fromarray(A)
+                im.save("output/output" + str(i) + ".png")
+        
+            print("saved")
+            #---------------------------------------
+        
             # Random samples
             if i < 5:
                 random_samples[i].append(x_pred_byte)
@@ -281,6 +306,7 @@ def main(opt):
             worst_samples[name].append(sample_worst[name])
             results[name].append(metric_best[name])
 
+
     # Store best, worst and random samples
     samples = {f'random_{i + 1}': torch.cat(random_sample).numpy() for i, random_sample in enumerate(random_samples)}
     samples['cond_rec'] = torch.cat(cond_rec)
@@ -289,6 +315,7 @@ def main(opt):
         samples[f'{name}_worst'] = torch.cat(worst_samples[name]).numpy()
         results[name] = torch.cat(results[name]).numpy()
 
+    print(x_pred_byte.shape)
     ##################################################################################################################
     # Compute FVD
     ##################################################################################################################

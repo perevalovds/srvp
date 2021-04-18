@@ -1,0 +1,1 @@
+python preprocessing/kth/make_test_set.py --data_dir db --size 1

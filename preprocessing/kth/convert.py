@@ -6,7 +6,8 @@ import subprocess
 
 
 # KTH action classes
-classes = ('boxing', 'handclapping', 'handwaving', 'jogging', 'running', 'walking')
+classes = ['walking']
+#('boxing', 'handclapping', 'handwaving', 'jogging', 'running', 'walking')
 
 
 if __name__ == "__main__":
