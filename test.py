@@ -226,7 +226,7 @@ def main(opt):
             print("    ", tensor1d.size())
             #destroy some values
             #destroy = #500 #100 #50 #100 
-            destroy = 0# math.floor(num * 0.04) #0.20)
+            destroy = math.floor(num * 0.04) #0.20)
             print("   destroy", destroy)
             for x in range(destroy):
                 i = random.randint(0,num-1)
