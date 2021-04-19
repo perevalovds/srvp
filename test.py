@@ -16,6 +16,8 @@
 import configargparse
 import os
 import random
+import math
+
 import torch
 
 import numpy as np
@@ -206,6 +208,31 @@ def main(opt):
     model.to(device)
     model.eval()
 
+
+    # Destroy part of the model -------------------------------------------------------
+    
+    # Print model's state_dict
+    #print("MODEL", model);
+
+    print("Model's state_dict:")
+    for param_tensor in model.state_dict():
+        tensor = model.state_dict()[param_tensor]
+        L = len(list(tensor.size()))
+        num = tensor.numel()
+        #we are interested in len 2 and 4
+        if num > 1000:    #L > 0: #L == 2 or L == 4:
+            print(param_tensor, "\t", tensor.size(), len(list(tensor.size())), num)
+            tensor1d = tensor.view(num)
+            print("    ", tensor1d.size())
+            #destroy some values
+            #destroy = #500 #100 #50 #100 
+            destroy = 0# math.floor(num * 0.04) #0.20)
+            print("   destroy", destroy)
+            for x in range(destroy):
+                i = random.randint(0,num-1)
+                tensor1d[i] = tensor1d[i] * 1.5
+    
+
     ##################################################################################################################
     # Eval
     ##################################################################################################################
@@ -242,6 +269,7 @@ def main(opt):
         for i in range(opt.n_samples):
             print(i)
             # Infer latent variables
+            dt = 0.5 #default
             x_rec, y, _, w, _, _, _, _ = model(x_cond, nt_cond, dt=1 / xp_config.n_euler_steps)
             y_0 = y[-1]
             if i == 0:

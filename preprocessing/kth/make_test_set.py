@@ -73,7 +73,7 @@ if __name__ == "__main__":
         # Randomly choose the beginning of the video extract to be included in the testing set
         
         # FIRST FRAME  HARDCODED
-        t_0 = 10   #np.random.randint(len(images_fnames) - args.seq_len + 1)
+        t_0 = 30 #10   #np.random.randint(len(images_fnames) - args.seq_len + 1)
 
         images = []
         for t in range(args.seq_len):
