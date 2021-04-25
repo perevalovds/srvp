@@ -184,3 +184,33 @@ We refer to the links hereinabove for solutions to this problem.
 
 
 Please feel free to create an issue for any other problem that you might encounter using our code.
+
+
+## (Denis Perevalov) Damaging experiments
+
+I explored how gradual network damaging affects video prediction on KTH videos.
+
+1) You will see three experiments - resulted video and network image.
+
+2) Each experiment contains 100 iterations, starting from original network and then network is randomly damaged again and again.
+Videos contains repetitive frames, network "starts" from 10 frames, and you see here its prediction.
+Start frames are mixed, but network changes - so you will see how prediction changes and degrades.
+
+video 1: 40 frames per iteration
+video 2: 120 frames per iteration
+video 3: 21 frames per iteration
+
+3) About damaging:
+Iteration 1 - original network,
+before iteration 2,3,...100 - we damage 100 random values of network.
+The damaging is in multiplying given network weight on float random value from 0 to 1.
+- It's really "Halzheimer" forgetting style, isn't it!
+
+The place for the damage is chosen as random layer and random point there.
+So, small layers are damaged more densely than huge layers.
+
+3) About drawing network:
+each image corresponds to each iteration,
+I draw 1D and 2D network matrices "as is" and project 4D matrices to 2D using simple slicing.
+
+
