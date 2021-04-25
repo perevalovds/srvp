@@ -146,7 +146,45 @@ def _get_idx_worst(name, ref, hyp):
         return torch.nonzero(hyp < ref, as_tuple=False).flatten()
     raise ValueError(f'Metric \'{name}\' not yet implemented')
 
+    
+#------------------------------------------------------------------------------
+# Damage part of the model -------------------------------------------------------
+def damage(model):
+    print("Damaging...")
+    
+    # Print model's state_dict
+    #print("MODEL", model);
 
+    #print("Model's state_dict:")
+    damages = 100 #1000
+    
+    for dam in range(damages):
+        tensor = random.choice(list(model.state_dict().values()))
+        num = tensor.numel()
+        tensor1d = tensor.view(num)
+        #print("    ", tensor1d.size())
+        i = random.randint(0,num-1)
+        tensor1d[i] = tensor1d[i] * random.uniform(0,4) #0.2 #3 #1.5
+    
+    #for param_tensor in model.state_dict():
+    #    tensor = model.state_dict()[param_tensor]
+    #    L = len(list(tensor.size()))
+    #    num = tensor.numel()
+    #    #we are interested in len 2 and 4
+    #    if num > 1000:    #L > 0: #L == 2 or L == 4:
+    #        #print(param_tensor, "\t", tensor.size(), len(list(tensor.size())), num)
+    #        tensor1d = tensor.view(num)
+    #        #print("    ", tensor1d.size())
+    #        #destroy some values
+    #        #destroy = #500 #100 #50 #100 
+    #        destroy = math.floor(num * 0.04) #0.20)
+    #        #print("   destroy", destroy)
+    #        for x in range(destroy):
+    #            i = random.randint(0,num-1)
+    #            tensor1d[i] = tensor1d[i] * random.uniform(0,4) #0.2 #3 #1.5
+                
+
+#------------------------------------------------------------------------------                
 def main(opt):
     """
     Tests SRVP by computing and printing its PSNR, SSIM, LPIPS and FVD scores.
@@ -209,28 +247,7 @@ def main(opt):
     model.eval()
 
 
-    # Destroy part of the model -------------------------------------------------------
-    
-    # Print model's state_dict
-    #print("MODEL", model);
-
-    print("Model's state_dict:")
-    for param_tensor in model.state_dict():
-        tensor = model.state_dict()[param_tensor]
-        L = len(list(tensor.size()))
-        num = tensor.numel()
-        #we are interested in len 2 and 4
-        if num > 1000:    #L > 0: #L == 2 or L == 4:
-            print(param_tensor, "\t", tensor.size(), len(list(tensor.size())), num)
-            tensor1d = tensor.view(num)
-            print("    ", tensor1d.size())
-            #destroy some values
-            #destroy = #500 #100 #50 #100 
-            destroy = math.floor(num * 0.04) #0.20)
-            print("   destroy", destroy)
-            for x in range(destroy):
-                i = random.randint(0,num-1)
-                tensor1d[i] = tensor1d[i] * 1.5
+   
     
 
     ##################################################################################################################
@@ -265,48 +282,65 @@ def main(opt):
         skip = model.encode(x_cond)[1] if model.skipco != 'none' else None
         # Generate opt.n_samples predictions
         
-        print("prediction...");
-        for i in range(opt.n_samples):
-            print(i)
-            # Infer latent variables
-            dt = 0.5 #default
-            x_rec, y, _, w, _, _, _, _ = model(x_cond, nt_cond, dt=1 / xp_config.n_euler_steps)
-            y_0 = y[-1]
-            if i == 0:
-                cond_rec.append(x_rec.cpu().mul(255).byte().permute(1, 0, 3, 4, 2))
-            # Use the model in prediction mode starting from the last inferred state
-            Nt_test = 80
-            
-            y_os = model.generate(y_0, [], Nt_test - nt_cond + 1, dt=1 / opt.n_euler_steps)[0]
-            y = y_os[1:].contiguous()  # Remove the first state which is the last inferred state
-            x_pred = model.decode(w, y, skip).clamp(0, 1)
-            
-            
-
-            # Metrics
-            #mse = torch.mean(F.mse_loss(x_pred, x_target, reduction='none'), dim=[3, 4])
-            #metrics_batch = {
-            #    'psnr': 10 * torch.log10(1 / mse).mean(2).mean(0).cpu(),
-            #    'ssim': _ssim_wrapper(x_pred, x_target).mean(2).mean(0).cpu(),
-            #    'lpips': _lpips_wrapper(x_pred, x_target, lpips_model).mean(0).cpu()
-            #}
-            x_pred_byte = x_pred.cpu().mul(255).byte().permute(1, 0, 3, 4, 2)
-
-            #---------------------------------------
-            # Save image
-            print("x_pred_byte", x_pred_byte.shape)   #shape is ([1, 30, 64, 64, 1])
-            x_numpy = x_pred_byte.numpy()
-
-            n = x_numpy.shape[1]   #number of frames
-            
-            print("frames:", n)
-            for i in range(n):
-                A = x_numpy[0,i,:,:,0]
-                #print(A.shape)
-                im = Image.fromarray(A)
-                im.save("output/output" + str(i) + ".png")
         
-            print("saved")
+        #DAMAGES -------------------------------
+        DAMAGES_ITER = 50       #number of interations
+        
+        frame_num_ = 0
+        
+        for dam in range(DAMAGES_ITER):
+        
+            print("Iteration", dam, " / ", DAMAGES_ITER);
+            for i in range(opt.n_samples):
+                #print(i)
+                # Infer latent variables
+                dt0 = 0.5 #0.001 #0.25  #0.5 #default
+                x_rec, y, _, w, _, _, _, _ = model(x_cond, nt_cond, dt=dt0) #1 / xp_config.n_euler_steps)
+                y_0 = y[-1]
+                if i == 0:
+                    cond_rec.append(x_rec.cpu().mul(255).byte().permute(1, 0, 3, 4, 2))
+                    
+                # Use the model in prediction mode starting from the last inferred state
+                Nt_test = 80-37   #----------- HARDCODED NUMTER OF FRAMES
+                
+                y_os = model.generate(y_0, [], Nt_test - nt_cond + 1, dt=dt0)[0]  #1 / opt.n_euler_steps)[0]
+                y = y_os[1:].contiguous()  # Remove the first state which is the last inferred state
+                x_pred = model.decode(w, y, skip).clamp(0, 1)
+                
+                
+            
+                # Metrics
+                #mse = torch.mean(F.mse_loss(x_pred, x_target, reduction='none'), dim=[3, 4])
+                #metrics_batch = {
+                #    'psnr': 10 * torch.log10(1 / mse).mean(2).mean(0).cpu(),
+                #    'ssim': _ssim_wrapper(x_pred, x_target).mean(2).mean(0).cpu(),
+                #    'lpips': _lpips_wrapper(x_pred, x_target, lpips_model).mean(0).cpu()
+                #}
+                x_pred_byte = x_pred.cpu().mul(255).byte().permute(1, 0, 3, 4, 2)
+            
+                #---------------------------------------
+                # Save frames
+                #print("    x_pred_byte", x_pred_byte.shape)   #shape is ([1, 30, 64, 64, 1])
+                x_numpy = x_pred_byte.numpy()
+            
+                n = x_numpy.shape[1]   #number of frames
+                
+                print("    frames:", n)
+                for i in range(n):
+                    A = x_numpy[0,i,:,:,0]
+                    #print(A.shape)
+                    im = Image.fromarray(A)
+                    
+                    frame_name = f'{frame_num_:05d}' + ".png"
+                    frame_num_ = frame_num_ + 1
+                    
+                    im.save("output/output" + frame_name)
+            
+                #print("saved")
+                
+                #damaging
+                damage(model)
+                
             #---------------------------------------
         
             # Random samples
