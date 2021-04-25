@@ -163,7 +163,7 @@ DAMAGES_ITER = 100
 #------------------------------------------------------------------------------
 
 # Damage part of the model -------------------------------------------------------
-def damage(model):
+def damage(model, iter):
     #print("Damaging...")
     
     # Print model's state_dict
@@ -171,13 +171,55 @@ def damage(model):
 
     #print("Model's state_dict:")
     
+    Tensors = []
+    
+    List = model.state_dict().values()
+    N = len(List)
+    
+    for param_tensor in model.state_dict():
+        tensor = model.state_dict()[param_tensor]
+        Tensors.append(tensor)
+    
     for dam in range(FRAME_DAMAGES):
-        tensor = random.choice(list(model.state_dict().values()))
-        num = tensor.numel()
-        tensor1d = tensor.view(num)
-        #print("    ", tensor1d.size())
-        i = random.randint(0,num-1)
-        tensor1d[i] = tensor1d[i] * random.uniform(0,1) #random.uniform(0,4) #0.2 #3 #1.5
+        id = random.randrange(N)    
+        print("damage id", id, N)
+        tensor = Tensors[id]
+        Size = list(tensor.size())
+        Len = len(Size)
+        
+        if (Len > 0):
+        
+            num = tensor.numel()
+            tensor1d = tensor.view(num)
+            
+            #print("    ", tensor1d.size())
+            k = random.randint(0,num-1)
+            tensor1d[k] = tensor1d[k] * random.uniform(0,1) #random.uniform(0,4) #0.2 #3 #1.5
+        
+            # Compute x,y of index k
+            x = 0
+            y = 0
+            hh = 1
+            if Len == 1:
+                x = k
+                print("1d ", x, Size[0])
+            if Len == 2:
+                x = k // Size[1]
+                y = k % Size[1]
+                hh = Size[1]
+                print("2d ", x, y, Size[0], Size[1])
+            if Len == 4:
+                k1 = k // (Size[2] * Size[3])
+                x = k1 // Size[1]
+                y = k1 % Size[1]
+                hh = Size[1]
+                print("4d ", x, y, Size[0], Size[1], Size[2], Size[3])
+            
+            # Draw red point on the model image        
+            draw_weights.draw_red_points(id, x, y, hh)
+       
+
+    
     
     #for param_tensor in model.state_dict():
     #    tensor = model.state_dict()[param_tensor]
@@ -297,17 +339,19 @@ def main(opt):
         
         
         #DAMAGES -------------------------------
-
+        # Print network structure
         draw_weights.print_model(model)
         
+        # Draw original weights
+        draw_weights.draw_model(model)      
+        draw_weights.save_model_image(0)
+
+                
         frame_num_ = 0
         
-        for dam in range(DAMAGES_ITER):
+        for iteration in range(DAMAGES_ITER):
         
-            print("Iteration", dam, " / ", DAMAGES_ITER);
-            
-            draw_weights.draw_model(model)
-
+            print("Iteration", iteration, " / ", DAMAGES_ITER);           
             
             for i in range(opt.n_samples):
                 #print(i)
@@ -356,8 +400,12 @@ def main(opt):
             
                 #print("saved")
                 
-                #damaging
-                damage(model)
+                #damaging and save model image if not the last iteration
+                if (iteration < DAMAGES_ITER-1):
+                    damage(model, iteration)
+                    draw_weights.save_model_image(iteration)
+                
+                
                 
             #---------------------------------------
         

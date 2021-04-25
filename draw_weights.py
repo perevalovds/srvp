@@ -54,6 +54,8 @@ w = 1200
 h = 0
 scly = 0.08
 indy = 10
+zoom = 2
+
 tensor_y = []
 tensor_w = []
 tensor_h = []
@@ -61,28 +63,33 @@ tensor_h = []
 
 
 #------------------------------------------------------------------------------
-def put_pixel_rgb(x, y, red, green, blue, zoom):
-    global IMAGE
+def put_pixel_rgb(x, y, red, green, blue):
+    global IMAGE, zoom
     
     gx = x * zoom
     gy = y * zoom
-    for a in range(zoom):
-        for b in range(zoom):
+    for b in range(zoom):
+        for a in range(zoom):
             IMAGE[gy + b, gx + a, 0] = red
             IMAGE[gy + b, gx + a, 1] = green
             IMAGE[gy + b, gx + a, 2] = blue
 
 #------------------------------------------------------------------------------
-def put_pixel_float(x, y, v_float, minv, maxv, zoom):
-    global IMAGE
+def put_pixel_float(x, y, v_float, minv, maxv):
+    global IMAGE, zoom
     
     col = clamp(math.floor(mapf(v_float, minv, maxv, 0, 255)), 0, 255)                    
-    put_pixel_rgb(x, y, col, col, col, zoom)
+    put_pixel_rgb(x, y, col, col, col)
 
+#------------------------------------------------------------------------------
+def save_model_image(iteration):   
+    image_file = 'output_weights/network_' + f'{iteration:05d}' + ".png"                    
+    cv2.imwrite(image_file,IMAGE)
+    
 #------------------------------------------------------------------------------
 def draw_model(model):
 
-    global IMAGE, w, h, scly, indy, tensor_y
+    global IMAGE, w, h, scly, indy, zoom, tensor_y
 
     #compute size of image
     h = 0
@@ -126,7 +133,6 @@ def draw_model(model):
     #print("tensor_y", tensor_y)
 
     #create image
-    zoom = 2
     print("   gen image", w, h, " zoom", zoom)
     
     IMAGE = np.zeros((h*zoom,w*zoom,3),np.uint8)
@@ -162,17 +168,14 @@ def draw_model(model):
                     if (Len == 4):
                         v = tensor[x,yy,0,0] #Just ignoring other components...
                     #print(v)   #it seems normally v = [-1..1]
-                    put_pixel_float(x + x0, y + Y, v, minv, maxv, zoom)
+                    put_pixel_float(x + x0, y + Y, v, minv, maxv)
         if Len == 1:
             x0 = (w-w1)//2
             y = 0
             for x in range(w1):
                 v = tensor[x]
-                put_pixel_float(x + x0, y + Y, v, minv, maxv, zoom)
+                put_pixel_float(x + x0, y + Y, v, minv, maxv)
 
-    
-    #save
-    cv2.imwrite('output_weights/network.png',IMAGE)
     
     #exit from program  
     #print("exiting by calling os._exit(0)...");
@@ -181,23 +184,19 @@ def draw_model(model):
     
 #------------------------------------------------------------------------------
 #draw on model red pixels in damaged parts
-#pix_list is identifier of tensor id, x and y
 
-def draw_model_red_points(model, pix_list):
-    for it in pix_list:
-        i = it[0]
-        x = it[1]
-        y = it[2]
+def draw_red_points(id, x, yy, hh):
+    global IMAGE, w, h, scly, indy, tensor_y
     
-        Y = tensor_y[i]
-        w1 = tensor_w[i]
-        h1 = tensor_h[i]
-        #print(i, Y, w1, h1)
+    Y = tensor_y[id]
+    w1 = tensor_w[id]
+    h1 = tensor_h[id]
+    #print(i, Y, w1, h1)
 
-        hh = Size[1]
-        x0 = (w-w1)//2
-            
-        put_pixel_rgb(x + x0, y + Y, 0, 0, 255, zoom)
+    x0 = (w-w1)//2
+    y = yy * h1 // hh
+        
+    put_pixel_rgb(x + x0, y + Y, 0, 0, 255)
         
     
 #------------------------------------------------------------------------------
