@@ -22,19 +22,34 @@ from os.path import join
 from PIL import Image
 from tqdm import trange
 
+#-----------------------------------------------------------
+# VIDEO NAME AND FIRST FRAME HARDCODED
+#Note: please set Nt_test in test.py accordingly
+
+#EXPER 01
+#vid = 'running/person01_running_d4'
+#t_0 = 315  #np.random.randint(len(images_fnames) - args.seq_len + 1)
+
+#EXPER 02
+#vid = 'walking/person01_walking_d2'
+#t_0 = 182
+
+
+#EXPER 03
+vid = 'handclapping/person08_handclapping_d4'
+t_0 = 14
+
+
+#-----------------------------------------------------------
+
+
 
 # KTH action classes
+#not matter
 classes = ['running']
 #['walking']
 #['boxing', 'handclapping', 'handwaving', 'jogging', 'running', 'walking']
 
-# VIDEO NAME AND FIRST FRAME HARDCODED
-vid = 'running/person01_running_d4'
-t_0 = 315 #0 #94 # 10 #30 #10   #np.random.randint(len(images_fnames) - args.seq_len + 1)
-
-
-        
-#'walking/person01_walking_d4' #f'person{person:02d}_{action}_d{trial}'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

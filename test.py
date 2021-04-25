@@ -39,6 +39,20 @@ from PIL import Image
 #drawing weights helper module:
 import draw_weights
 
+#----------------------------------------------------
+#HARDCODED NUMBER OF FRAMES
+#Note: depends on experiment in make_test_set "vid" and "t_0"
+
+#EXPER 1
+#Nt_test  = 50    
+
+#EXPER 2
+#Nt_test = 130    
+
+#EXPER 3
+Nt_test = 31
+
+#----------------------------------------------------
 
 def _ssim_wrapper(sample, gt):
     """
@@ -202,18 +216,18 @@ def damage(model):
             hh = 1
             if Len == 1:
                 x = k
-                print("1d ", x, Size[0])
+                #print("1d ", x, Size[0])
             if Len == 2:
                 x = k // Size[1]
                 y = k % Size[1]
                 hh = Size[1]
-                print("2d ", x, y, Size[0], Size[1])
+                #print("2d ", x, y, Size[0], Size[1])
             if Len == 4:
                 k1 = k // (Size[2] * Size[3])
                 x = k1 // Size[1]
                 y = k1 % Size[1]
                 hh = Size[1]
-                print("4d ", x, y, Size[0], Size[1], Size[2], Size[3])
+                #print("4d ", x, y, Size[0], Size[1], Size[2], Size[3])
             
             # Draw red point on the model image        
             draw_weights.draw_red_points(id, x, y, hh)
@@ -363,7 +377,8 @@ def main(opt):
                     cond_rec.append(x_rec.cpu().mul(255).byte().permute(1, 0, 3, 4, 2))
                     
                 # Use the model in prediction mode starting from the last inferred state
-                Nt_test = 50 #80   #----------- HARDCODED NUMTER OF FRAMES
+                global Nt_test # = 50 #80   #----------- HARDCODED NUMBER OF FRAMES
+                
                 
                 y_os = model.generate(y_0, [], Nt_test - nt_cond + 1, dt=dt0)[0]  #1 / opt.n_euler_steps)[0]
                 y = y_os[1:].contiguous()  # Remove the first state which is the last inferred state
