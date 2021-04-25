@@ -305,6 +305,10 @@ def main(opt):
         for dam in range(DAMAGES_ITER):
         
             print("Iteration", dam, " / ", DAMAGES_ITER);
+            
+            draw_weights.draw_model(model)
+
+            
             for i in range(opt.n_samples):
                 #print(i)
                 # Infer latent variables
