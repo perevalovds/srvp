@@ -36,6 +36,8 @@ from metrics.fvd.score import fvd as fvd_score
 
 from PIL import Image
 
+#drawing weights helper module:
+import draw_weights
 
 
 def _ssim_wrapper(sample, gt):
@@ -147,6 +149,7 @@ def _get_idx_worst(name, ref, hyp):
     raise ValueError(f'Metric \'{name}\' not yet implemented')
 
     
+    
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -157,12 +160,11 @@ FRAME_DAMAGES = 100 #100 #1000
 
 #number of interations
 DAMAGES_ITER = 100       
-
 #------------------------------------------------------------------------------
 
 # Damage part of the model -------------------------------------------------------
 def damage(model):
-    print("Damaging...")
+    #print("Damaging...")
     
     # Print model's state_dict
     #print("MODEL", model);
@@ -296,6 +298,7 @@ def main(opt):
         
         #DAMAGES -------------------------------
 
+        draw_weights.print_model(model)
         
         frame_num_ = 0
         
