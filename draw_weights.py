@@ -112,7 +112,7 @@ def draw_model(model):
         if Len > 1:
             h += indy            
             tensor_y.append(h)  #store Y for this element
-            h1 = math.floor(Size[1] * scly)
+            h1 = max(math.floor(Size[1] * scly),1)
             tensor_w.append(Size[0])
 
             tensor_h.append(h1)            
@@ -146,6 +146,9 @@ def draw_model(model):
                         
         minv = torch.min(tensor)
         maxv = torch.max(tensor)
+        if (minv == maxv):
+            minv -= 1
+            maxv += 1
                
         Y = tensor_y[i]
         w1 = tensor_w[i]

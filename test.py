@@ -163,7 +163,7 @@ DAMAGES_ITER = 100
 #------------------------------------------------------------------------------
 
 # Damage part of the model -------------------------------------------------------
-def damage(model, iter):
+def damage(model):
     #print("Damaging...")
     
     # Print model's state_dict
@@ -182,7 +182,7 @@ def damage(model, iter):
     
     for dam in range(FRAME_DAMAGES):
         id = random.randrange(N)    
-        print("damage id", id, N)
+        #print("damage id", id, N)
         tensor = Tensors[id]
         Size = list(tensor.size())
         Len = len(Size)
@@ -402,8 +402,8 @@ def main(opt):
                 
                 #damaging and save model image if not the last iteration
                 if (iteration < DAMAGES_ITER-1):
-                    damage(model, iteration)
-                    draw_weights.save_model_image(iteration)
+                    damage(model)          
+                    draw_weights.save_model_image(iteration + 1)        #+ 1 because it's for next iteration
                 
                 
                 
