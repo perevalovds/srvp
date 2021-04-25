@@ -55,20 +55,29 @@ h = 0
 scly = 0.08
 indy = 10
 tensor_y = []
+tensor_w = []
+tensor_h = []
 
+
+
+#------------------------------------------------------------------------------
+def put_pixel_rgb(x, y, red, green, blue, zoom):
+    global IMAGE
+    
+    gx = x * zoom
+    gy = y * zoom
+    for a in range(zoom):
+        for b in range(zoom):
+            IMAGE[gy + b, gx + a, 0] = red
+            IMAGE[gy + b, gx + a, 1] = green
+            IMAGE[gy + b, gx + a, 2] = blue
 
 #------------------------------------------------------------------------------
 def put_pixel_float(x, y, v_float, minv, maxv, zoom):
     global IMAGE
     
     col = clamp(math.floor(mapf(v_float, minv, maxv, 0, 255)), 0, 255)                    
-    gx = x * zoom
-    gy = y * zoom
-    for a in range(zoom):
-        for b in range(zoom):
-            IMAGE[gy + b, gx + a, 0] = col
-            IMAGE[gy + b, gx + a, 1] = col
-            IMAGE[gy + b, gx + a, 2] = col 
+    put_pixel_rgb(x, y, col, col, col, zoom)
 
 #------------------------------------------------------------------------------
 def draw_model(model):
@@ -88,16 +97,26 @@ def draw_model(model):
         print(i, "\t", num, "\t", param_tensor, "\t", Size, "\t", Len)    
         i = i + 1
         
+        if Len == 0:
+            tensor_y.append(0) 
+            tensor_w.append(0)
+            tensor_h.append(0)
+        
         if Len > 1:
             h += indy            
             tensor_y.append(h)  #store Y for this element
-            
-            h += math.floor(Size[1] * scly)
+            h1 = math.floor(Size[1] * scly)
+            tensor_w.append(Size[0])
+
+            tensor_h.append(h1)            
+            h += h1            
         
             prev_1d = False
         if Len == 1:
             tensor_y.append(h)  #store Y for this element
-
+            tensor_w.append(Size[0])
+            tensor_h.append(1)
+            
             h = h + 1
             #if not prev_1d:
             #    h += indy
@@ -121,14 +140,17 @@ def draw_model(model):
                         
         minv = torch.min(tensor)
         maxv = torch.max(tensor)
-                
+               
+        Y = tensor_y[i]
+        w1 = tensor_w[i]
+        h1 = tensor_h[i]
+        #print(i, Y, w1, h1)
+
+        i = i + 1
+            
         if Len > 1:
-            Y = tensor_y[i]
-            i = i + 1
 
             hh = Size[1]
-            h1 = math.floor(hh * scly)
-            w1 = Size[0]
             x0 = (w-w1)//2
             
             for y in range(h1):
@@ -142,10 +164,6 @@ def draw_model(model):
                     #print(v)   #it seems normally v = [-1..1]
                     put_pixel_float(x + x0, y + Y, v, minv, maxv, zoom)
         if Len == 1:
-            Y = tensor_y[i]
-            i = i + 1
-
-            w1 = Size[0]
             x0 = (w-w1)//2
             y = 0
             for x in range(w1):
@@ -157,10 +175,29 @@ def draw_model(model):
     cv2.imwrite('output_weights/network.png',IMAGE)
     
     #exit from program  
-    print("exiting by calling os._exit(0)...");
-    os._exit(0)
+    #print("exiting by calling os._exit(0)...");
+    #os._exit(0)
         
     
+#------------------------------------------------------------------------------
+#draw on model red pixels in damaged parts
+#pix_list is identifier of tensor id, x and y
+
+def draw_model_red_points(model, pix_list):
+    for it in pix_list:
+        i = it[0]
+        x = it[1]
+        y = it[2]
+    
+        Y = tensor_y[i]
+        w1 = tensor_w[i]
+        h1 = tensor_h[i]
+        #print(i, Y, w1, h1)
+
+        hh = Size[1]
+        x0 = (w-w1)//2
+            
+        put_pixel_rgb(x + x0, y + Y, 0, 0, 255, zoom)
+        
     
 #------------------------------------------------------------------------------
-
