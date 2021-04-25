@@ -148,6 +148,18 @@ def _get_idx_worst(name, ref, hyp):
 
     
 #------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#PARAMS
+
+#weights to damage in one iteration
+FRAME_DAMAGES = 100 #100 #1000
+
+#number of interations
+DAMAGES_ITER = 100       
+
+#------------------------------------------------------------------------------
+
 # Damage part of the model -------------------------------------------------------
 def damage(model):
     print("Damaging...")
@@ -156,15 +168,14 @@ def damage(model):
     #print("MODEL", model);
 
     #print("Model's state_dict:")
-    damages = 100 #1000
     
-    for dam in range(damages):
+    for dam in range(FRAME_DAMAGES):
         tensor = random.choice(list(model.state_dict().values()))
         num = tensor.numel()
         tensor1d = tensor.view(num)
         #print("    ", tensor1d.size())
         i = random.randint(0,num-1)
-        tensor1d[i] = tensor1d[i] * random.uniform(0,4) #0.2 #3 #1.5
+        tensor1d[i] = tensor1d[i] * random.uniform(0,1) #random.uniform(0,4) #0.2 #3 #1.5
     
     #for param_tensor in model.state_dict():
     #    tensor = model.state_dict()[param_tensor]
@@ -284,7 +295,7 @@ def main(opt):
         
         
         #DAMAGES -------------------------------
-        DAMAGES_ITER = 50       #number of interations
+
         
         frame_num_ = 0
         
@@ -301,7 +312,7 @@ def main(opt):
                     cond_rec.append(x_rec.cpu().mul(255).byte().permute(1, 0, 3, 4, 2))
                     
                 # Use the model in prediction mode starting from the last inferred state
-                Nt_test = 80-37   #----------- HARDCODED NUMTER OF FRAMES
+                Nt_test = 50 #80   #----------- HARDCODED NUMTER OF FRAMES
                 
                 y_os = model.generate(y_0, [], Nt_test - nt_cond + 1, dt=dt0)[0]  #1 / opt.n_euler_steps)[0]
                 y = y_os[1:].contiguous()  # Remove the first state which is the last inferred state

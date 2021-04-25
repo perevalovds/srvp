@@ -24,9 +24,17 @@ from tqdm import trange
 
 
 # KTH action classes
-classes = ['walking']
+classes = ['running']
+#['walking']
 #['boxing', 'handclapping', 'handwaving', 'jogging', 'running', 'walking']
 
+# VIDEO NAME AND FIRST FRAME HARDCODED
+vid = 'running/person01_running_d4'
+t_0 = 315 #0 #94 # 10 #30 #10   #np.random.randint(len(images_fnames) - args.seq_len + 1)
+
+
+        
+#'walking/person01_walking_d4' #f'person{person:02d}_{action}_d{trial}'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -67,17 +75,14 @@ if __name__ == "__main__":
         person = np.random.randint(21, 26)
         trial = np.random.randint(1, 5)
         
-        # VIDEO NAME HARDCODED
-        vid = 'person01_walking_d4' #f'person{person:02d}_{action}_d{trial}'
-        images_fnames = sorted(os.listdir(join(processed_dir, action, vid)))
+        images_fnames = sorted(os.listdir(join(processed_dir, vid))) #action, vid)))
         # Randomly choose the beginning of the video extract to be included in the testing set
         
-        # FIRST FRAME  HARDCODED
-        t_0 = 30 #10   #np.random.randint(len(images_fnames) - args.seq_len + 1)
 
         images = []
         for t in range(args.seq_len):
-            img = np.array(Image.open(join(processed_dir, action, vid, images_fnames[t_0 + t])))[:, :, 0]
+            img = np.array(Image.open(join(processed_dir, vid, images_fnames[t_0 + t])))[:, :, 0] 
+            #action, vid, images_fnames[t_0 + t])))[:, :, 0]
             images.append(img)
         sequences.append(np.array(images))
         persons.append(person)
